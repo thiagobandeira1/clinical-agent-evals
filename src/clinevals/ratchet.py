@@ -32,7 +32,8 @@ def load_baseline(path: Path) -> dict[str, float]:
     """
     if not path.exists():
         raise FileNotFoundError(f"baseline not found at {path}")
-    candidate: Any = json.loads(path.read_text(encoding="utf-8"))
+    # utf-8-sig: a leading BOM (PowerShell 5.1 / Notepad default) is stripped, no-op otherwise.
+    candidate: Any = json.loads(path.read_text(encoding="utf-8-sig"))
     if isinstance(candidate, dict) and isinstance(candidate.get("metrics"), dict):
         candidate = candidate["metrics"]
     if isinstance(candidate, dict) and isinstance(candidate.get("overall"), dict):
@@ -68,15 +69,19 @@ def compare_to_baseline(
                 f"{gate.metric}: missing from current results (baseline {expected:.4f})"
             )
             continue
-        if math.isnan(actual):
-            # NaN compares False against everything and would sail through the gate.
-            regressions.append(f"{gate.metric}: current value is NaN (baseline {expected:.4f})")
+        if math.isnan(actual) or math.isnan(expected):
+            # NaN compares False against everything and would sail through the gate —
+            # from either side (a NaN baseline would pass every future run forever).
+            regressions.append(
+                f"{gate.metric}: NaN value (current {actual}, baseline {expected}) — "
+                "a metric was undefined; fix the scorer or the baseline"
+            )
             continue
-        worse = (
-            actual < expected - tolerance
-            if gate.higher_is_better
-            else actual > expected + tolerance
-        )
+        # Direction-adjusted delta with an absolute epsilon: a drop of EXACTLY the tolerance
+        # must pass. Plain subtraction fails that contract in binary floating point
+        # (0.17 - 0.02 == 0.15000000000000002 would flag a 0.15 current as a regression).
+        delta = (expected - actual) if gate.higher_is_better else (actual - expected)
+        worse = delta > tolerance and not math.isclose(delta, tolerance, rel_tol=0.0, abs_tol=1e-9)
         if worse:
             direction = "below" if gate.higher_is_better else "above"
             regressions.append(

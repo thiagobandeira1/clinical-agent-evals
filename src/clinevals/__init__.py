@@ -7,7 +7,20 @@ so that importing the pure-metrics modules (``clinevals.ranking`` etc.) through 
 never pulls in langchain — the leaf-purity guarantee holds at runtime, not just in source.
 """
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    # Static imports so mypy/pyright type the lazily loaded names precisely; TYPE_CHECKING is
+    # False at runtime, so the leaf-purity guarantee (no langchain import) still holds.
+    from clinevals.fakes import scripted_judge
+    from clinevals.grounding import (
+        GroundingVerdict,
+        build_judge_input,
+        faithfulness_rubric,
+        parse_grounding_verdict,
+        verdict_metrics,
+    )
+    from clinevals.judge import JudgeParseError, Rubric, extract_json_object, invoke_judge
 
 from clinevals.artifacts import (
     EVAL_BEGIN,
@@ -60,6 +73,11 @@ def __getattr__(name: str) -> Any:
     import importlib
 
     return getattr(importlib.import_module(module_name), name)
+
+
+def __dir__() -> list[str]:
+    """Expose the lazy names to dir()/IDE completion alongside the eager ones."""
+    return sorted(set(globals()) | set(_LAZY))
 
 
 __all__ = [

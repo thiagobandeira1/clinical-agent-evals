@@ -53,7 +53,8 @@ def load_jsonl(
         raise FileNotFoundError(f"gold set not found at {path}")
     items: list[ItemT] = []
     problems: list[str] = []
-    for lineno, line in enumerate(path.read_text(encoding="utf-8").split("\n"), start=1):
+    # utf-8-sig strips a leading BOM (PowerShell 5.1 / Notepad default); no-op otherwise.
+    for lineno, line in enumerate(path.read_text(encoding="utf-8-sig").split("\n"), start=1):
         if not line.strip():
             continue
         try:

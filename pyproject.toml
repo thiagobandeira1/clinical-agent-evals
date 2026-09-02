@@ -34,7 +34,9 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "UP", "S", "C4", "SIM", "RUF"]
-ignore = ["S101"]
+# UP046/UP047: module-level TypeVars are part of the public API (ItemT is exported), so
+# PEP 695 inline type parameters would remove a documented name.
+ignore = ["S101", "UP046", "UP047"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S"]

@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Install dependencies
+        run: uv sync --group dev
+      - name: Lint (ruff)
+        run: uv run ruff check .
+      - name: Format check (ruff)
+        run: uv run ruff format --check .
+      - name: Type-check (mypy)
+        run: uv run mypy
+      - name: Tests (keyless — llm marker auto-skips)
+        run: uv run pytest
+      - name: Build wheel (installability)
+        run: |
+          uv build
+          ls -la dist/
+      - name: Install wheel in a clean venv and import
+        run: |
+          uv venv /tmp/clean
+          uv pip install --python /tmp/clean/bin/python dist/*.whl
+          /tmp/clean/bin/python -c "import clinevals; print('clinevals', clinevals.__version__)"
+      - name: Guard — no data files tracked
+        run: |
+          if git ls-files | grep -E '\.(csv|tsv|parquet|db|duckdb|sqlite|sqlite3|json\.gz)$'; then
+            echo "::error::Data files are committed"; exit 1
+          fi
+          echo "OK"

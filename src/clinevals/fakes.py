@@ -11,10 +11,15 @@ from clinevals.grounding import GroundingVerdict
 
 def _verdict_json(verdict: GroundingVerdict) -> str:
     """Serialize a verdict back into the judge's output schema (claims list + notes)."""
-    claims: list[dict[str, object]] = []
-    claims += [{"claim": "c", "verdict": "supported"}] * verdict.claims_supported
-    claims += [{"claim": "c", "verdict": "unsupported"}] * verdict.claims_unsupported
-    claims += [{"claim": "c", "verdict": "contradicted"}] * verdict.claims_contradicted
+    # Fresh dicts per claim: list multiplication would alias one dict across a bucket and
+    # the citation flags below would all collapse onto it.
+    claims: list[dict[str, object]] = [
+        {"claim": "c", "verdict": "supported"} for _ in range(verdict.claims_supported)
+    ]
+    claims += [{"claim": "c", "verdict": "unsupported"} for _ in range(verdict.claims_unsupported)]
+    claims += [
+        {"claim": "c", "verdict": "contradicted"} for _ in range(verdict.claims_contradicted)
+    ]
     if verdict.citation_valid_ratio is not None and claims:
         # Encode the ratio over the available claims as closely as integer flags allow.
         valid_count = round(verdict.citation_valid_ratio * len(claims))

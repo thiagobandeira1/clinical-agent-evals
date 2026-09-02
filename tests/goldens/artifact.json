@@ -1,0 +1,163 @@
+{
+  "answer_model": "recorded-outputs",
+  "config_hash": "cfg-0001",
+  "counts": {
+    "per_category": {
+      "gap": {
+        "fn": 1,
+        "fp": 1,
+        "tp": 4
+      },
+      "no-gap": {
+        "fn": 0,
+        "fp": 1,
+        "tp": 0
+      }
+    },
+    "per_split": {
+      "dev": {
+        "fn": 1,
+        "fp": 1,
+        "tp": 1
+      },
+      "test": {
+        "fn": 0,
+        "fp": 1,
+        "tp": 3
+      }
+    }
+  },
+  "dataset_hash": "ds-0001",
+  "date": "2026-01-01",
+  "git_sha": "deadbeef",
+  "item_count": 5,
+  "judge_human_agreement": 0.75,
+  "judge_model": "scripted-judge",
+  "metrics": {
+    "overall": {
+      "citation_valid_ratio": 1.0,
+      "contradiction_rate": 0.1,
+      "faithfulness": 0.9,
+      "hit": 1.0,
+      "micro_f1": 0.8571428571428571,
+      "micro_precision": 0.75,
+      "micro_recall": 1.0,
+      "refused": 1.0
+    },
+    "per_category": {
+      "gap": {
+        "citation_valid_ratio": 1.0,
+        "contradiction_rate": 0.06666666666666667,
+        "faithfulness": 0.85,
+        "hit": 1.0
+      },
+      "no-gap": {
+        "citation_valid_ratio": 0.5,
+        "contradiction_rate": 0.5,
+        "faithfulness": 0.5,
+        "hit": 0.0,
+        "refused": 1.0
+      }
+    },
+    "per_split": {
+      "dev": {
+        "citation_valid_ratio": 0.5,
+        "contradiction_rate": 0.25,
+        "faithfulness": 0.625,
+        "hit": 0.5
+      },
+      "test": {
+        "citation_valid_ratio": 1.0,
+        "contradiction_rate": 0.1,
+        "faithfulness": 0.9,
+        "hit": 1.0,
+        "refused": 1.0
+      }
+    }
+  },
+  "note": "metrics.overall is the test split; tuning uses dev only",
+  "per_item": [
+    {
+      "category": "gap",
+      "counts": {
+        "fn": 1,
+        "fp": 0,
+        "tp": 1
+      },
+      "item_id": "dev-01",
+      "metrics": {
+        "contradiction_rate": 0.0,
+        "faithfulness": 0.75,
+        "hit": 1.0
+      },
+      "split": "dev"
+    },
+    {
+      "category": "no-gap",
+      "counts": {
+        "fn": 0,
+        "fp": 1,
+        "tp": 0
+      },
+      "item_id": "dev-02",
+      "metrics": {
+        "citation_valid_ratio": 0.5,
+        "contradiction_rate": 0.5,
+        "faithfulness": 0.5,
+        "hit": 0.0
+      },
+      "split": "dev"
+    },
+    {
+      "category": "gap",
+      "counts": {
+        "fn": 0,
+        "fp": 0,
+        "tp": 2
+      },
+      "item_id": "test-01",
+      "metrics": {
+        "citation_valid_ratio": 1.0,
+        "contradiction_rate": 0.0,
+        "faithfulness": 1.0,
+        "hit": 1.0
+      },
+      "split": "test"
+    },
+    {
+      "category": "gap",
+      "counts": {
+        "fn": 0,
+        "fp": 1,
+        "tp": 1
+      },
+      "item_id": "test-02",
+      "metrics": {
+        "contradiction_rate": 0.2,
+        "faithfulness": 0.8,
+        "hit": 1.0
+      },
+      "split": "test"
+    },
+    {
+      "category": "no-gap",
+      "counts": {
+        "fn": 0,
+        "fp": 0,
+        "tp": 0
+      },
+      "item_id": "test-03",
+      "metrics": {
+        "refused": 1.0
+      },
+      "split": "test"
+    }
+  ],
+  "rubric_sha256": "f59d0a4ba23d864bf95a7b7590b89d6ec3ad5e0bb04d5fe324e15120bec827fa",
+  "run_label": "golden",
+  "spot_check_item_ids": [
+    "dev-01",
+    "test-03"
+  ],
+  "tier": "keyless"
+}

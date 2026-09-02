@@ -1,6 +1,7 @@
 """Ratchet gates: regress against MEASURED baselines, never aspirational thresholds."""
 
 import json
+import math
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,11 @@ class Gate(BaseModel):
     metric: str
     higher_is_better: bool = True
     """False for lower-is-better metrics such as a hallucination rate."""
+
+    def __init__(self, metric: str, *, higher_is_better: bool = True) -> None:
+        # Positional OR keyword metric name: ``Gate("micro_recall")`` reads like the gate it
+        # declares, ``Gate(metric=...)`` stays valid for pydantic-style call sites.
+        super().__init__(metric=metric, higher_is_better=higher_is_better)
 
 
 def load_baseline(path: Path) -> dict[str, float]:
@@ -61,6 +67,10 @@ def compare_to_baseline(
             regressions.append(
                 f"{gate.metric}: missing from current results (baseline {expected:.4f})"
             )
+            continue
+        if math.isnan(actual):
+            # NaN compares False against everything and would sail through the gate.
+            regressions.append(f"{gate.metric}: current value is NaN (baseline {expected:.4f})")
             continue
         worse = (
             actual < expected - tolerance

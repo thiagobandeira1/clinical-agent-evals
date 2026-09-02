@@ -43,27 +43,31 @@ def load_jsonl(
 ) -> list[ItemT]:
     """Load one ``item_type`` per non-blank line and enforce every invariant at once.
 
-    Phase 1 (per line, fails immediately with ``{name}:{lineno}:`` context): parseable JSON,
-    model validity. Phase 2 (whole file): unique ``item_id`` plus every ``validators`` entry;
-    all problems aggregate into ONE :class:`DatasetError`. Raises ``FileNotFoundError`` when
-    the file is missing.
+    Every problem — unparseable lines (``{name}:{lineno}:`` context), model-invalid lines,
+    duplicate ``item_id``s, and each ``validators`` finding — aggregates into ONE
+    :class:`DatasetError`, so a broken gold set is fixed in one pass, not one line per run.
+    Validators only run when every line parsed (they receive a fully typed list). Raises
+    ``FileNotFoundError`` when the file is missing.
     """
     if not path.exists():
         raise FileNotFoundError(f"gold set not found at {path}")
     items: list[ItemT] = []
-    for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+    problems: list[str] = []
+    for lineno, line in enumerate(path.read_text(encoding="utf-8").split("\n"), start=1):
         if not line.strip():
             continue
         try:
             raw = json.loads(line)
         except json.JSONDecodeError as exc:
-            raise DatasetError(f"{path.name}:{lineno}: invalid JSON: {exc}") from exc
+            problems.append(f"{path.name}:{lineno}: invalid JSON: {exc}")
+            continue
         try:
             items.append(item_type.model_validate(raw))
         except ValidationError as exc:
-            raise DatasetError(f"{path.name}:{lineno}: {exc}") from exc
+            problems.append(f"{path.name}:{lineno}: {exc}")
+    if problems:
+        raise DatasetError("gold set invalid:\n  " + "\n  ".join(problems))
 
-    problems: list[str] = []
     seen: set[str] = set()
     for item in items:
         if item.item_id in seen:

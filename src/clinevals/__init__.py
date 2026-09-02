@@ -1,7 +1,13 @@
 """clinevals — keyless-CI-first evaluation harness for clinical LLM agents.
 
 ``__all__`` (plus the module paths) IS the compatibility surface.
+
+The langchain-core-dependent names (judge, grounding, fakes) are loaded lazily via PEP 562
+so that importing the pure-metrics modules (``clinevals.ranking`` etc.) through the package
+never pulls in langchain — the leaf-purity guarantee holds at runtime, not just in source.
 """
+
+from typing import Any
 
 from clinevals.artifacts import (
     EVAL_BEGIN,
@@ -18,16 +24,7 @@ from clinevals.artifacts import (
 )
 from clinevals.classify import ConfusionCounts, micro_prf, outside_universe_rate, set_confusion
 from clinevals.dataset import DatasetError, EvalItemBase, ItemT, Split, Validator, load_jsonl
-from clinevals.fakes import scripted_judge
-from clinevals.grounding import (
-    GroundingVerdict,
-    build_judge_input,
-    faithfulness_rubric,
-    parse_grounding_verdict,
-    verdict_metrics,
-)
 from clinevals.human import agreement_rate, stratified_sample
-from clinevals.judge import JudgeParseError, Rubric, extract_json_object, invoke_judge
 from clinevals.ranking import hit_at, mrr, precision_at, recall_at
 from clinevals.ratchet import Gate, compare_to_baseline, load_baseline
 from clinevals.runner import (
@@ -40,6 +37,30 @@ from clinevals.runner import (
 )
 
 __version__ = "0.1.0"
+
+#: name -> module for the lazily loaded (langchain-core-importing) surface.
+_LAZY: dict[str, str] = {
+    "Rubric": "clinevals.judge",
+    "JudgeParseError": "clinevals.judge",
+    "extract_json_object": "clinevals.judge",
+    "invoke_judge": "clinevals.judge",
+    "GroundingVerdict": "clinevals.grounding",
+    "build_judge_input": "clinevals.grounding",
+    "faithfulness_rubric": "clinevals.grounding",
+    "parse_grounding_verdict": "clinevals.grounding",
+    "verdict_metrics": "clinevals.grounding",
+    "scripted_judge": "clinevals.fakes",
+}
+
+
+def __getattr__(name: str) -> Any:
+    module_name = _LAZY.get(name)
+    if module_name is None:
+        raise AttributeError(f"module 'clinevals' has no attribute {name!r}")
+    import importlib
+
+    return getattr(importlib.import_module(module_name), name)
+
 
 __all__ = [
     "EVAL_BEGIN",

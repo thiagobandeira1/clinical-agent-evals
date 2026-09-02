@@ -111,7 +111,10 @@ def build_artifact(
         payload["rubric_sha256"] = stamp.rubric_sha256
     if stamp.judge_human_agreement is not None:
         payload["judge_human_agreement"] = stamp.judge_human_agreement
+    fixed_keys = frozenset(payload) | {"counts", "per_item"}
     for key, value in sorted(stamp.extra.items()):
+        if key in fixed_keys:
+            raise ReportError(f"RunStamp.extra may not override the fixed artifact key {key!r}")
         payload[key] = value
     counts: dict[str, object] = {}
     if report.counts_per_category:
@@ -124,6 +127,10 @@ def build_artifact(
         payload["per_item"] = [item.model_dump() for item in report.per_item]
     if extra:
         for extra_key, extra_value in extra.items():
+            if extra_key in fixed_keys:
+                # The whole point of the fixed shape: publishing dev-contaminated numbers
+                # must require hand-building a payload, not an ``extra=`` one-liner.
+                raise ReportError(f"extra may not override the fixed artifact key {extra_key!r}")
             payload[extra_key] = extra_value
     return payload
 

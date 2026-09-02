@@ -88,8 +88,9 @@ def test_higher_is_better_exactly_at_default_tolerance_passes() -> None:
 
 
 def test_higher_is_better_just_below_tolerance_fails() -> None:
+    # 1e-6 below the boundary: beyond the 1e-9 rounding epsilon, so a real regression.
     regressions = compare_to_baseline(
-        {"mrr": 0.625 - 1e-9}, {"mrr": 0.75}, gates=(Gate(metric="mrr"),), tolerance=0.125
+        {"mrr": 0.625 - 1e-6}, {"mrr": 0.75}, gates=(Gate(metric="mrr"),), tolerance=0.125
     )
 
     assert len(regressions) == 1

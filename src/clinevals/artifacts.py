@@ -28,9 +28,11 @@ def write_artifact(path: Path, payload: Mapping[str, object]) -> None:
     """Deterministic JSON: sorted keys, 2-space indent, non-ASCII preserved, trailing newline,
     LF line endings on every OS. Never invents data — stamps come from the caller."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    text = json.dumps(payload, sort_keys=True, indent=2, ensure_ascii=False) + "\n"
+    # allow_nan=False: a NaN/inf metric raises here, loudly, instead of writing a non-JSON
+    # `NaN` token that a later load_baseline would accept and that would pass every gate.
+    text = json.dumps(payload, sort_keys=True, indent=2, ensure_ascii=False, allow_nan=False)
     with path.open("w", encoding="utf-8", newline="\n") as fh:
-        fh.write(text)
+        fh.write(text + "\n")
 
 
 def sha256_file(path: Path, *, short: int | None = None) -> str:
@@ -48,8 +50,13 @@ def detect_git_sha(repo_root: Path | None = None) -> str:
             text=True,
             check=True,
         )
-    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
-        raise RuntimeError("not inside a git repository (or git unavailable)") from exc
+    except subprocess.CalledProcessError as exc:
+        detail = (exc.stderr or "").strip()
+        raise RuntimeError(
+            "not inside a git repository" + (f": {detail}" if detail else "")
+        ) from exc
+    except OSError as exc:  # git missing, bad repo_root (NotADirectoryError on Windows), ...
+        raise RuntimeError(f"cannot run git for {repo_root or 'cwd'}: {exc}") from exc
     return result.stdout.strip()
 
 

@@ -49,7 +49,7 @@ jobs:
           uv venv /tmp/clean
           uv pip install --python /tmp/clean/bin/python dist/*.whl pytest
           cd /tmp && /tmp/clean/bin/python -c "import clinevals; print('clinevals', clinevals.__version__)"
-          /tmp/clean/bin/python -m pytest "$GITHUB_WORKSPACE/tests/test_consumer_contract.py" -q -p no:cacheprovider --rootdir=/tmp
+          /tmp/clean/bin/python -m pytest "$GITHUB_WORKSPACE/tests/test_consumer_contract.py" -q -p no:cacheprovider -o addopts="" --rootdir=/tmp
       - name: Guard — no data files tracked
         run: |
           if git ls-files | grep -E '\.(csv|tsv|parquet|db|duckdb|sqlite|sqlite3|json\.gz)$'; then
